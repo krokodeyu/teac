@@ -486,6 +486,7 @@ impl<'a> FunctionGenerator<'a> {
             ir::Operand::Global(_) => Err(Error::UnsupportedOperand {
                 what: format!("unsupported int operand: {}", val),
             }),
+            _ => todo!()
         }
     }
 
@@ -532,6 +533,7 @@ impl<'a> FunctionGenerator<'a> {
             ir::Operand::Global(_) => Err(Error::UnsupportedOperand {
                 what: "unexpected global variable in value position".into(),
             }),
+            _ => todo!()
         }
     }
 
@@ -580,6 +582,7 @@ impl<'a> FunctionGenerator<'a> {
             ir::Operand::Integer(_) => Err(Error::UnsupportedOperand {
                 what: format!("unsupported pointer operand: {}", val),
             }),
+            _ => todo!()
         }
     }
 
@@ -602,6 +605,7 @@ impl<'a> FunctionGenerator<'a> {
             ir::Operand::Global(_) => Err(Error::UnsupportedOperand {
                 what: format!("unsupported index operand: {}", val),
             }),
+            _ => todo!()
         }
     }
 
@@ -651,7 +655,8 @@ impl<'a> FunctionGenerator<'a> {
                 return Err(Error::UnsupportedOperand {
                     what: "global variable in phi copy".into(),
                 });
-            }
+            },
+            _ => todo!()
         };
 
         self.insts.push(Inst::Mov {

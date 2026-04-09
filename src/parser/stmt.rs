@@ -1,4 +1,5 @@
 use crate::ast;
+use crate::ir::stmt::StmtInner;
 
 use super::ParseContext;
 use super::common::{ParseResult, Pair, Rule, get_pos, grammar_error};
@@ -28,6 +29,11 @@ impl<'a> ParseContext<'a> {
                 Rule::if_stmt => {
                     return Ok(Box::new(ast::CodeBlockStmt {
                         inner: ast::CodeBlockStmtInner::If(self.parse_if_stmt(inner)?),
+                    }));
+                }
+                Rule::for_stmt => {
+                    return Ok(Box::new(ast::CodeBlockStmt {
+                        inner: ast::CodeBlockStmtInner::For(self.parse_for_stmt(inner)?),
                     }));
                 }
                 Rule::while_stmt => {
@@ -145,6 +151,89 @@ impl<'a> ParseContext<'a> {
             if_stmts,
             else_stmts,
         }))
+    }
+
+    // to parse for statement.
+    fn parse_for_stmt(&self, pair: Pair) -> ParseResult<Box<ast::ForStmt>> {
+        // backup for error handling, for `into_inner()` call consumes the original pair.
+        let pair_for_error = pair.clone();
+        let mut identifier: Option<String> = None;
+        let mut lower_bound: Option<Box<ast::ExprUnit>> = None;
+        let mut upper_bound: Option<Box<ast::ExprUnit>> = None;
+        let mut stmts = Vec::new();
+
+        for inner in pair.into_inner() {
+            match inner.as_rule() {
+                Rule::identifier => {
+                    // First identifier is the loop variable, subsequent ones are in range_bound
+                    if identifier.is_none() {
+                        identifier = Some(inner.as_str().to_string());
+                    }
+                }
+                Rule::range_bound => {
+                    if lower_bound.is_none() {
+                        lower_bound = Some(self.parse_range_bound(inner)?);
+                    } else {
+                        upper_bound = Some(self.parse_range_bound(inner)?);
+                    }
+                }
+                Rule::code_block_stmt => {
+                    stmts.push(*self.parse_code_block_stmt(inner)?);
+                }
+                _ => {}
+            }
+        }
+
+        Ok(Box::new(ast::ForStmt {
+            identifier: identifier
+                .ok_or_else(|| grammar_error("for.identifier", &pair_for_error))?,
+            lower_bound: lower_bound
+                .ok_or_else(|| grammar_error("for.lower_bound", &pair_for_error))?,
+            upper_bound: upper_bound
+                .ok_or_else(|| grammar_error("for.upper_bound", &pair_for_error))?,
+            stmts,
+        }))
+    }
+
+    // match range bound: exprUnit, num, parenthesized arithExpr, and fnCall.
+    fn parse_range_bound(&self,  pair: Pair) -> ParseResult<Box<ast::ExprUnit>> {
+        use super::common::parse_num;
+        let pair_for_error = pair.clone();
+        let pos = get_pos(&pair);
+        for inner in pair.into_inner() {
+            match inner.as_rule() {
+                Rule::num => {
+                    let num = parse_num(inner)?;
+                    return Ok(Box::new(ast::ExprUnit{
+                        pos,
+                        inner: ast::ExprUnitInner::Num(num),
+                    }));
+                }
+                Rule::arith_expr => {
+                    let expr = self.parse_arith_expr(inner)?;
+                    return Ok(Box::new(ast::ExprUnit{
+                        pos,
+                        inner: ast::ExprUnitInner::ArithExpr(expr),
+                    }));
+                }
+                Rule::identifier => {
+                    let id = inner.as_str().to_string();
+                    return Ok(Box::new(ast::ExprUnit{
+                        pos,
+                        inner: ast::ExprUnitInner::Id(id),
+                    }));
+                }
+                Rule::fn_call => {
+                    let fc = self.parse_fn_call(inner)?;
+                    return Ok(Box::new(ast::ExprUnit{
+                        pos,
+                        inner: ast::ExprUnitInner::FnCall(fc),
+                    }));
+                }
+                _ => {}
+            }
+        }
+        Err(grammar_error("range_bound", &pair_for_error))
     }
 
     fn parse_while_stmt(&self, pair: Pair) -> ParseResult<Box<ast::WhileStmt>> {

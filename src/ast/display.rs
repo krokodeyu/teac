@@ -9,6 +9,7 @@ impl Display for BuiltIn {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self {
             BuiltIn::Int => write!(f, "int"),
+            BuiltIn::Float => write!(f, "float"),
         }
     }
 }
@@ -77,11 +78,21 @@ impl Display for ArithBiOpExpr {
     }
 }
 
+impl Display for CastExpr {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        if let Some(target_type) = &self.target_type {
+            write!(f, "({} as {})", self.expr_unit, target_type.inner)
+        } else {
+            write!(f, "{}", self.expr_unit)
+        }
+    }
+}
+
 impl Display for ArithExprInner {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self {
             ArithExprInner::ArithBiOpExpr(expr) => write!(f, "{}", expr),
-            ArithExprInner::ExprUnit(unit) => write!(f, "{}", unit),
+            ArithExprInner::CastExpr(expr) => write!(f, "{}", expr),
         }
     }
 }
@@ -208,6 +219,7 @@ impl Display for ExprUnitInner {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         match self {
             ExprUnitInner::Num(n) => write!(f, "{}", n),
+            ExprUnitInner::Float(fp) => write!(f, "{}", fp),
             ExprUnitInner::Id(id) => write!(f, "{}", id),
             ExprUnitInner::ArithExpr(a) => write!(f, "{}", a),
             ExprUnitInner::FnCall(fc) => write!(f, "{}", fc),

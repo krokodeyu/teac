@@ -257,20 +257,20 @@ impl<'a> ParseContext<'a> {
             return Err(grammar_error("arith_term", &pair_for_error));
         }
 
-        let first_unit = self.parse_expr_unit(inner_pairs[0].clone())?;
+        let first_unit = self.parse_cast_expr(inner_pairs[0].clone())?;
         let mut expr = Box::new(ast::ArithExpr {
-            pos: first_unit.pos,
-            inner: ast::ArithExprInner::ExprUnit(first_unit),
+            pos: first_unit.expr_unit.pos,
+            inner: ast::ArithExprInner::CastExpr(first_unit),
         });
 
         let mut i = 1;
         while i < inner_pairs.len() {
             if inner_pairs[i].as_rule() == Rule::arith_mul_op {
                 let op = self.parse_arith_mul_op(inner_pairs[i].clone())?;
-                let right_unit = self.parse_expr_unit(inner_pairs[i + 1].clone())?;
+                let right_unit = self.parse_cast_expr(inner_pairs[i + 1].clone())?;
                 let right = Box::new(ast::ArithExpr {
-                    pos: right_unit.pos,
-                    inner: ast::ArithExprInner::ExprUnit(right_unit),
+                    pos: right_unit.expr_unit.pos,
+                    inner: ast::ArithExprInner::CastExpr(right_unit),
                 });
 
                 expr = Box::new(ast::ArithExpr {
@@ -314,6 +314,29 @@ impl<'a> ParseContext<'a> {
         Err(grammar_error("arith_mul_op", &pair_for_error))
     }
 
+    pub(crate) fn parse_cast_expr(&self, pair: Pair) -> ParseResult<Box<ast::CastExpr>> {
+        let pair_for_error = pair.clone();
+        let mut expr_unit = None;
+        let mut target_type = None;
+        
+        for inner in pair.into_inner() {
+            match inner.as_rule(){
+                Rule::expr_unit => {
+                    expr_unit = Some(self.parse_expr_unit(inner)?);
+                },
+                Rule::type_spec=> {
+                    target_type = self.parse_type_spec(inner)?;
+                },
+                _ => {}
+            }
+        };
+        
+        Ok(Box::new(ast::CastExpr{
+            expr_unit: expr_unit.ok_or_else(|| grammar_error("casr_expr.expr_unit", &pair_for_error))?,
+            target_type,
+        }))
+    }
+
     pub(crate) fn parse_expr_unit(&self, pair: Pair) -> ParseResult<Box<ast::ExprUnit>> {
         let pair_for_error = pair.clone();
         let pos = get_pos(&pair);
@@ -333,6 +356,14 @@ impl<'a> ParseContext<'a> {
             return Ok(Box::new(ast::ExprUnit {
                 pos,
                 inner: ast::ExprUnitInner::Num(-num),
+            }));
+        }
+        if filtered.len() == 1 && filtered[0].as_rule() == Rule::float {
+            let float_str = filtered[0].as_str();
+            let float_val: f32 = float_str.parse().map_err(|_| grammar_error("float", &pair_for_error))?;
+            return Ok(Box::new(ast::ExprUnit {
+                pos,
+                inner: ast::ExprUnitInner::Float(float_val),
             }));
         }
 

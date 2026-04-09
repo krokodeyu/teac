@@ -80,6 +80,7 @@ impl<'ir> FunctionGenerator<'ir> {
             },
             ast::CodeBlockStmtInner::Call(s) => self.handle_call_stmt(s),
             ast::CodeBlockStmtInner::If(s) => self.handle_if_stmt(s, con_label, bre_label),
+            ast::CodeBlockStmtInner::For(_s) => todo!(),
             ast::CodeBlockStmtInner::While(s) => self.handle_while_stmt(s),
             ast::CodeBlockStmtInner::Return(s) => self.handle_return_stmt(s),
             ast::CodeBlockStmtInner::Continue(_) => self.handle_continue_stmt(con_label),
@@ -413,6 +414,7 @@ impl<'ir> FunctionGenerator<'ir> {
     fn handle_expr_unit(&mut self, unit: &ast::ExprUnit) -> Result<Operand, Error> {
         let operand = match &unit.inner {
             ast::ExprUnitInner::Num(num) => Ok(Operand::from(*num)),
+            ast::ExprUnitInner::Float(float) => Ok(Operand::from(*float)),
             ast::ExprUnitInner::Id(id) => {
                 let op = self.lookup_variable(id)?;
                 let is_array = matches!(
@@ -508,7 +510,7 @@ impl<'ir> FunctionGenerator<'ir> {
     fn handle_arith_expr(&mut self, expr: &ast::ArithExpr) -> Result<Operand, Error> {
         match &expr.inner {
             ast::ArithExprInner::ArithBiOpExpr(expr) => self.handle_arith_biop_expr(expr),
-            ast::ArithExprInner::ExprUnit(unit) => self.handle_expr_unit(unit),
+            ast::ArithExprInner::CastExpr(_unit) => todo!(),
         }
     }
 

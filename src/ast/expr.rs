@@ -47,7 +47,14 @@ pub struct ArithBiOpExpr {
 #[derive(Debug, Clone)]
 pub enum ArithExprInner {
     ArithBiOpExpr(Box<ArithBiOpExpr>),
-    ExprUnit(Box<ExprUnit>),
+    CastExpr(Box<CastExpr>),
+}
+
+// exprUnit + targetType
+#[derive(Debug, Clone)]
+pub struct CastExpr {
+    pub expr_unit: Box<ExprUnit>,
+    pub target_type: Option<crate::ast::TypeSpecifier>,
 }
 
 #[derive(Debug, Clone)]
@@ -122,6 +129,7 @@ impl FnCall {
 #[derive(Debug, Clone)]
 pub enum ExprUnitInner {
     Num(i32),
+    Float(f32),
     Id(String),
     ArithExpr(Box<ArithExpr>),
     FnCall(Box<FnCall>),

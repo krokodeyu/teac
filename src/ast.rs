@@ -15,11 +15,12 @@ pub use expr::{
     ArithBiOpExpr, ArithExpr, ArithExprInner, ArrayExpr, BoolBiOpExpr, BoolExpr, BoolExprInner,
     BoolUOpExpr, BoolUnit, BoolUnitInner, ComExpr, ExprUnit, ExprUnitInner, FnCall, IndexExpr,
     IndexExprInner, LeftVal, LeftValInner, MemberExpr, RightVal, RightValInner, RightValList,
+    CastExpr,
 };
 
 pub use stmt::{
     AssignmentStmt, BreakStmt, CallStmt, CodeBlockStmt, CodeBlockStmtInner, ContinueStmt, IfStmt,
-    NullStmt, ReturnStmt, WhileStmt,
+    NullStmt, ReturnStmt, WhileStmt, ForStmt,
 };
 
 pub use decl::{

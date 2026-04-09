@@ -11,6 +11,7 @@ pub trait Named {
 
 #[derive(Clone)]
 pub enum Operand {
+    Float(Float),
     Integer(Integer),
     Local(LocalRef),
     Global(GlobalVariable),
@@ -19,6 +20,7 @@ pub enum Operand {
 impl Operand {
     pub fn dtype(&self) -> &Dtype {
         match self {
+            Operand::Float(fp) => fp.dtype(),
             Operand::Integer(i) => i.dtype(),
             Operand::Local(l) => l.dtype(),
             Operand::Global(g) => g.dtype(),
@@ -44,6 +46,7 @@ impl Operand {
 impl Display for Operand {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
+            Operand::Float(fp) => write!(f, "{}", fp),
             Operand::Integer(i) => write!(f, "{}", i),
             Operand::Local(l) => write!(f, "{}", l),
             Operand::Global(g) => write!(f, "{}", g),
@@ -75,9 +78,44 @@ impl From<GlobalVariable> for Operand {
     }
 }
 
+impl From<f32> for Operand {
+    fn from(v: f32) -> Self {
+        Operand::Float(Float::from(v))
+    }
+}
+
+#[derive(Clone)]
+pub struct Float {
+    pub value: f32,
+}
+
+impl From<f32> for Float {
+    fn from(value: f32) -> Self {
+        Self { value }
+    }
+}
+
 impl From<i32> for Operand {
     fn from(v: i32) -> Self {
         Operand::Integer(Integer::from(v))
+    }
+}
+
+impl Typed for Float {
+    fn dtype(&self) -> &Dtype {
+        &Dtype::F32
+    }
+}
+
+impl Named for Float {
+    fn identifier(&self) -> Option<String> {
+        None
+    }
+}
+
+impl Display for Float {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.value)
     }
 }
 
