@@ -13,7 +13,7 @@ impl IrGenerator<'_> {
     pub fn handle_arith_expr_static(expr: &ast::ArithExpr) -> Result<i32, Error> {
         match &expr.inner {
             ast::ArithExprInner::ArithBiOpExpr(expr) => Self::handle_arith_biop_expr_static(expr),
-            ast::ArithExprInner::CastExpr(_unit) => todo!(),
+            ast::ArithExprInner::CastExpr(unit) => Self::handle_expr_unit_static(&unit.expr_unit),
         }
     }
 

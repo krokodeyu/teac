@@ -510,7 +510,7 @@ impl<'ir> FunctionGenerator<'ir> {
     fn handle_arith_expr(&mut self, expr: &ast::ArithExpr) -> Result<Operand, Error> {
         match &expr.inner {
             ast::ArithExprInner::ArithBiOpExpr(expr) => self.handle_arith_biop_expr(expr),
-            ast::ArithExprInner::CastExpr(_unit) => todo!(),
+            ast::ArithExprInner::CastExpr(unit) => self.handle_expr_unit(&unit.expr_unit),
         }
     }
 
